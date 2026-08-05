@@ -1,0 +1,33 @@
+{
+  "name": "sparkdrift",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sparkdrift — a cel-shaded arcade kart racer that builds to a single self-contained HTML file.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "build:fast": "vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test",
+    "test:shots": "playwright test tests/shots.spec.ts",
+    "test:bugclasses": "playwright test tests/bugclasses.spec.ts",
+    "test:mobile": "playwright test tests/mobile.spec.ts",
+    "perf": "playwright test tests/perf.spec.ts",
+    "balance": "playwright test tests/balance.spec.ts",
+    "licences": "node tools/licence-check.mjs"
+  },
+  "dependencies": {
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.1.2",
+    "@types/three": "^0.185.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.0",
+    "vite-plugin-singlefile": "^2.3.0"
+  }
+}
