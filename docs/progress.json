@@ -1,0 +1,46 @@
+{
+  "title": "Sparkdrift India",
+  "subtitle": "A cel-shaded kart racer across India, built in the browser",
+  "wave": 1,
+  "waveLabel": "Wave 1 — worldbuilding, render, defect sweep",
+  "build": {
+    "typecheck": "clean",
+    "singleFileBytes": 641580,
+    "tracksValidated": 2,
+    "bugClassPassing": 10,
+    "bugClassTotal": 12
+  },
+  "caveats": [
+    "No side-by-side against Mario Kart 8 Deluxe is possible — the game is not available in this environment. The critic works from a written first-party rubric applied to our own captured frames.",
+    "Multiplayer is local split-screen. Online play needs an authoritative server, prediction and hosting, none of which exist here.",
+    "Frame timings come from a headless software rasteriser with no GPU. They bound the CPU cost only and say nothing about real device frame rate."
+  ],
+  "pieces": [
+    { "id": "P1", "name": "India worldbuilding", "status": "running", "note": "Eight tracks across Kerala, Jaipur, Mumbai, the Himalaya, Goa, Varanasi, Kutch and Bengaluru. Two cups of four." },
+    { "id": "P2", "name": "Visual quality", "status": "running", "note": "Lighting, shadows, sky, particles, line weight and grade. The biggest gap to a first-party bar." },
+    { "id": "P3", "name": "Roster and customization", "status": "queued", "note": "Medical-student cast with honest stat trade-offs; driver, frame, wheels, paint, number." },
+    { "id": "P4", "name": "Defect sweep", "status": "running", "note": "Respawn never triggers from a deep off-track placement; one AI kart stays off the corridor for 1.43 s." },
+    { "id": "P5", "name": "Split-screen", "status": "queued", "note": "Two to four players, per-viewport cameras and HUDs." },
+    { "id": "P6", "name": "Items and balance", "status": "queued", "note": "Position-weighted draw, counterplay, and a hundred-race balance table actually read." },
+    { "id": "P7", "name": "Menus and shell", "status": "queued", "note": "Title, cup select, character select, results, options, licences." },
+    { "id": "P8", "name": "Audio and music", "status": "queued", "note": "Synthesised throughout, with Indian instrumentation per cup." }
+  ],
+  "foundation": [
+    { "name": "Track spine", "note": "Legs-and-fillets centreline, exact closure, one surfaceAt() queried by everything, swept mesh from the same stations." },
+    { "name": "Vehicle", "note": "Four raycast wheels, spring and damper, grip circle, slip-gated drift charge in three tiers." },
+    { "name": "Collision", "note": "Barriers are half-planes in track space, so the clamp is an exact swept test at any speed." },
+    { "name": "Verification", "note": "Playwright harness driving the production build; named frames each stating what they prove." }
+  ],
+  "critic": {
+    "round": 0,
+    "verdict": "Not yet run. The first critic pass goes in once wave 1 lands.",
+    "biggestGap": null
+  },
+  "fixed": [
+    "The cel shader multiplied by the light colour as well as the band level, darkening every surface by the ambient's own luminance.",
+    "Nothing converted linear to sRGB on output — the whole game rendered about five stops too dark.",
+    "The mesh builder's winding was inverted, so every generated box was inside-out and back-face culled. Karts rendered as solid black shells.",
+    "The Sobel's relative depth test fired across the entire road, because a grazing surface has a large depth gradient by construction.",
+    "A jump ramp launched at 31° for 102 m, clear over its landing. Caught by the validator's ballistic probe, not by eye."
+  ]
+}
