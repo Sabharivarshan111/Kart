@@ -1,5 +1,7 @@
 import { runAudioSelfTest } from './audio/selftest.ts';
 import { TRACKS, trackById } from './content/tracks/index.ts';
+import { validateTrack } from './track/validator.ts';
+import { theme } from './core/palette.ts';
 import './content/themes.ts';
 import { UI } from './core/palette.ts';
 import { seedFromLocation } from './core/rng.ts';
@@ -189,6 +191,7 @@ function kartStats(index: number): KartStats {
     finished: st.finished,
     finishTime: st.finishTime,
     respawns: k.respawns,
+    offTrackTimer: k.offTrackTimer,
     item: game.items.held[index] ?? null,
     wheelsOnGround: k.wheelsOnGround,
   };
@@ -200,6 +203,8 @@ function stats(): HarnessStats {
   const g = game.renderer.gbuffer.size;
   return {
     phase: game.race.phase,
+    cameraRoll: game.camera.currentRoll,
+    cameraFov: game.camera.fieldOfView,
     time: game.race.time,
     seed: game.seed,
     trackId: game.spec.id,
@@ -276,6 +281,23 @@ const harness: SparkdriftHarness = {
     if (enable !== undefined) game.items.telemetryEnabled = enable;
     return game.items.telemetry;
   },
+  touchState: () => ({
+    taps: game.touch.tapsRecognised,
+    steer: game.touch.controls.steer,
+    drift: game.touch.controls.drift,
+    throttle: game.touch.controls.throttle,
+  }),
+  setPlayerAi: (on: boolean) => game.setPlayerAi(on),
+  validateAllTracks: () =>
+    TRACKS.map((spec) => {
+      const report = validateTrack(spec, theme(spec.theme.name));
+      return {
+        trackId: report.trackId,
+        ok: report.ok,
+        issues: report.issues,
+        measurements: report.measurements,
+      };
+    }),
 };
 
 window.sparkdrift = harness;

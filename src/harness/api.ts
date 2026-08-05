@@ -45,12 +45,15 @@ export interface KartStats {
   finished: boolean;
   finishTime: number;
   respawns: number;
+  offTrackTimer: number;
   item: string | null;
   wheelsOnGround: number;
 }
 
 export interface HarnessStats {
   phase: Phase;
+  cameraRoll: number;
+  cameraFov: number;
   time: number;
   seed: number;
   trackId: string;
@@ -130,6 +133,14 @@ export interface SparkdriftHarness {
   sampleItemDistribution(position: number, n: number): Record<string, number>;
   /** The item telemetry log, for the balance table. */
   telemetry(enable?: boolean): unknown[];
+  /** Recognised taps in the touch steering zone, and the live steer value.
+   *  The game consumes a tap on the next physics step, so a test cannot see it
+   *  any other way. */
+  touchState(): { taps: number; steer: number; drift: boolean; throttle: number };
+  /** Hand the player's kart to the AI, for AI-only races. */
+  setPlayerAi(on: boolean): void;
+  /** Run the geometry validator on every track, in the shipped build. */
+  validateAllTracks(): { trackId: string; ok: boolean; issues: { severity: string; kind: string; message: string }[] }[];
 }
 
 declare global {

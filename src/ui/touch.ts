@@ -74,6 +74,10 @@ export class TouchControls {
   private steerValue = 0;
   /** Set for one poll when a tap in the steering zone is recognised. */
   private tapPending = false;
+  /** Monotonic count of recognised taps. Exposed to the harness because the
+   *  game consumes `tapPending` on the very next physics step, so a test has no
+   *  other way to observe that the gate fired. */
+  tapsRecognised = 0;
 
   visible = false;
   onPause: () => void = () => {};
@@ -125,6 +129,7 @@ export class TouchControls {
       // Distance, not duration. See the bug class note at the top.
       if (this.steerTravel < TAP_DISTANCE_PX * this.options.scale) {
         this.tapPending = true;
+        this.tapsRecognised++;
       }
       this.steerPointer = -1;
       this.steerValue = 0;

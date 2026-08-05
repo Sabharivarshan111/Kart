@@ -62,6 +62,11 @@ export class ChaseCamera {
     return this.fov;
   }
 
+  /** Current camera roll in radians, for the reduce-motion test. */
+  get currentRoll(): number {
+    return this.roll;
+  }
+
   update(dt: number, kart: Kart, alpha: number, lookBack: boolean): void {
     const motionScale = this.reduceMotion ? C.reducedMotionScale : 1;
 

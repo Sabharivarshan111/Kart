@@ -398,6 +398,32 @@ export class Game {
     this.camera.setPreset(name as CameraPreset);
   }
 
+  /**
+   * Hand the player's kart to an AI driver, for AI-only races.
+   *
+   * Used by the balance harness (a hundred races) and by the bug class 6 test,
+   * which asserts no kart is ever off-road for more than a second across a full
+   * AI-only race. Nothing about the kart changes — it is still driven through a
+   * `Controls`, still collides through the same code — only who fills the
+   * struct.
+   */
+  setPlayerAi(on: boolean): void {
+    if (!on) {
+      this.ai[0] = null;
+      return;
+    }
+    if (this.ai[0]) return;
+    const driver = new AiDriver(
+      this.karts[0]!,
+      this.line,
+      this.world.surface,
+      this.rng.fork(1),
+      { difficulty: 0.7 },
+    );
+    driver.shouldUseItem = (k) => this.items.aiShouldUse(k.index, this.karts, this.race);
+    this.ai[0] = driver;
+  }
+
   setControlOverride(index: number, controls: Partial<Controls> | null): void {
     if (index < 0 || index >= this.harnessOverrides.length) return;
     this.harnessOverrides[index] = controls;
