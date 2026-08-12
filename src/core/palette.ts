@@ -11,6 +11,36 @@
 
 export type Hex = number;
 
+/**
+ * The roadside prop a theme dresses its verges with. Naming the kit here rather
+ * than in the renderer keeps "what this place looks like" in one file with the
+ * colours it looks like it in: a Kerala backwater and a Himalayan pass have to
+ * be unmistakable from a single frame (AGENT_BRIEF, cultural representation),
+ * and a generic post in both makes them the same place twice.
+ *
+ * Each kit is built procedurally in `render/scenery.ts` from this theme's
+ * `scenery`/`sceneryAlt` colours — there are no colour literals there.
+ */
+export const SceneryKit = {
+  /** Coconut palm: leaning trunk, radial fronds. Kerala, and the coast. */
+  Palm: 'palm',
+  /** Carved sandstone screen pillar with a domed chhatri cap. Jaipur. */
+  Jali: 'jali',
+  /** Shack parasol on a driftwood pole. Goa. */
+  Parasol: 'parasol',
+  /** Sea-wall lighting mast with a crossarm. Mumbai. */
+  Mast: 'mast',
+  /** Stone lamp column on a stepped plinth. Varanasi ghats. */
+  GhatLamp: 'ghat-lamp',
+  /** Stacked salt block cairn. Rann of Kutch. */
+  Cairn: 'cairn',
+  /** Neon sign pylon on a gantry leg. Bengaluru at night. */
+  Pylon: 'pylon',
+  /** Conical deodar pine under snow. Himalayan pass. */
+  Pine: 'pine',
+} as const;
+export type SceneryKit = (typeof SceneryKit)[keyof typeof SceneryKit];
+
 export interface Theme {
   name: string;
   /** Sky gradient, top to horizon. */
@@ -20,6 +50,8 @@ export interface Theme {
    *  builds out of it. */
   scenery: Hex;
   sceneryAlt: Hex;
+  /** Which roadside prop this place is dressed with. */
+  sceneryKit: SceneryKit;
   road: Hex;
   kerbA: Hex;
   kerbB: Hex;

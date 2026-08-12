@@ -33,6 +33,13 @@ export interface TierSettings {
   /** Frame budget in ms that the adaptive controller aims at. */
   frameBudgetMs: number;
   maxParticles: number;
+  /** G-buffer AO taps, 0 to compile the loop out. Structural: a `#define`
+   *  resolved once at load, never touched by the adaptive controller. */
+  aoTaps: number;
+  /** Cloud cover in the sky dome, 0..1. Three octaves of noise over a
+   *  full-screen dome is the most expensive single thing in the frame, so the
+   *  lowest tier drops it. */
+  cloudAmount: number;
 }
 
 /**
@@ -59,6 +66,8 @@ export function resolveTier(): TierSettings {
       sceneryCount: 90,
       frameBudgetMs: 1000 / 60,
       maxParticles: 120,
+      aoTaps: 0,
+      cloudAmount: 0,
     };
   }
   if (touch || dpr > 2 || cores <= 4) {
@@ -69,6 +78,8 @@ export function resolveTier(): TierSettings {
       sceneryCount: 170,
       frameBudgetMs: 1000 / 60,
       maxParticles: 260,
+      aoTaps: 5,
+      cloudAmount: 0.85,
     };
   }
   return {
@@ -78,6 +89,8 @@ export function resolveTier(): TierSettings {
     sceneryCount: 260,
     frameBudgetMs: 1000 / 60,
     maxParticles: 420,
+    aoTaps: 8,
+    cloudAmount: 1,
   };
 }
 
@@ -131,7 +144,7 @@ export class Renderer {
     this.beauty.texture.colorSpace = THREE.LinearSRGBColorSpace;
 
     this.gbuffer = new GBuffer(1, 1, opts.tier.gbufferScale);
-    this.composite = new CompositePass(opts.theme);
+    this.composite = new CompositePass(opts.theme, { aoTaps: opts.tier.aoTaps });
   }
 
   /**
@@ -230,6 +243,7 @@ export class Renderer {
     camera.layers.enable(LAYER_OUTLINE);
 
     // --- 3. composite ------------------------------------------------------
+    this.composite.setCamera(camera);
     this.composite.setInputs(this.beauty.texture, this.gbuffer.target.texture, this.gbuffer.texelSize);
     this.composite.setState({ ...state, edgesEnabled: state.edgesEnabled && drawEdges });
     this.composite.render(this.gl, target);

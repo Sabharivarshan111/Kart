@@ -141,7 +141,20 @@ export class TrackSurface {
     let u = s0.u + (s1.u - s0.u >= 0 ? s1.u - s0.u : this.cl.length + s1.u - s0.u) * t;
     u = wrapLength(u, this.cl.length);
 
-    const lateral = (x - px) * rz - (z - pz) * rx;
+    // Signed offset along the station's right vector — a **dot** product with
+    // r, matching `pointAt` and `mesh.ts`, both of which place a point at
+    // `centre + r · lateral`.
+    //
+    // BUG (fixed): this was written as the 2D cross product `dx·rz − dz·rx`,
+    // which is the component along the *tangent*, not along r. Because (px,pz)
+    // is the closest point on the centreline the displacement is already
+    // perpendicular to the segment, so that expression evaluated to ~0 for
+    // every point on the map. SYMPTOM: `lateral` was always ≈0, so `onRoad` was
+    // always true, `distanceToEdge` was always the full half-width and
+    // `crossSection` always returned Road — walls never fired, the off-road
+    // recovery timer never accrued, and a kart teleported 30 m into the scenery
+    // drove on invisible tarmac at full road grip.
+    const lateral = (x - px) * rx + (z - pz) * rz;
 
     const profile = crossSection(Math.abs(lateral), halfWidth, near);
 

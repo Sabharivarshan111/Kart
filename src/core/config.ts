@@ -313,25 +313,83 @@ export const CONFIG = {
   },
 
   render: {
-    /** Cel ramp resolution. 4 bands: any more and it reads as a gradient, which
-     *  defeats the point. NearestFilter, or the ramp interpolates and you get
-     *  soft edges back. */
+    /** Cel ramp resolution for the *standard* ramp. 4 bands: any more and it
+     *  reads as a gradient, which defeats the point. NearestFilter, or the ramp
+     *  interpolates and you get soft edges back. The soft ramp (terrain) runs
+     *  one band under this and the crisp ramp (karts, items) one over — see
+     *  `celmaterial.ts`, `RAMP_ROWS`. */
     celBands: 4,
     /** Outline thickness in *screen pixels*, held constant with distance by
      *  scaling the hull expansion by view depth (brief §M3). */
     outlinePixels: 2.4,
-    /** Sobel edge strengths for the three G-buffer channels. */
+    /** Sobel edge strengths for the three G-buffer channels. Depth is the
+     *  silhouette channel and carries full weight; normal and id are *interior*
+     *  lines and are deliberately lighter, because a cel drawing that inks a
+     *  crease as hard as an outline reads as a wireframe. */
     edgeDepthStrength: 1.0,
-    edgeNormalStrength: 0.85,
-    edgeIdStrength: 1.0,
+    edgeNormalStrength: 0.62,
+    edgeIdStrength: 0.88,
     /** Relative depth threshold (Δd/d). Absolute depth comparison scribbles in
      *  the foreground and vanishes in the distance — this is bug class from
      *  M3 and the reason the comparison is relative. */
     edgeDepthThreshold: 0.028,
     edgeNormalThreshold: 0.42,
+    /** Metres over which interior lines (crease + id) fade out. Silhouettes
+     *  keep their weight until the far fade at 90–180 m. Measured against the
+     *  Copper Flats back straight: past ~55 m a kerb's own creases were still
+     *  being inked and the middle distance turned into a mat of hatching. */
+    edgeInteriorNear: 20,
+    edgeInteriorFar: 58,
+    /** Metres over which the ink colour drifts from the theme's ink toward a
+     *  darkened fog tint. Without it the distant tree line renders as a row of
+     *  black cut-outs pasted on the sky. */
+    edgeInkFadeNear: 34,
+    edgeInkFadeFar: 150,
+    /** Screen-space AO over the G-buffer. Radius in metres; 0.9 m is about a
+     *  wheel diameter, which is the contact scale we want darkened. Strength
+     *  above ~0.5 turns every kerb into a black gutter. */
+    aoRadius: 0.9,
+    aoStrength: 0.38,
+    /** AO is quantised to this many levels so contact darkening still reads as
+     *  drawn shading rather than as a soft render artefact. */
+    aoLevels: 3,
     /** Speed at which screen streaks reach full opacity. */
     streakFullSpeed: 26,
     shadowMapSize: 1024,
+
+    /** Tone map and grade, applied once at the end of the composite, before the
+     *  single linear→sRGB conversion. Values measured against the Copper Flats
+     *  grid shot: at exposure 1.0 with no shoulder the whole frame sat in the
+     *  middle third of the range and read as washed-out. */
+    exposure: 1.16,
+    /** Reinhard white point. Chosen over an ACES fit because ACES crushes the
+     *  darkest cel band down into the ink colour, and the bands are the look. */
+    whitePoint: 2.6,
+    saturation: 1.14,
+    /** Split tone: shadows cooled, highlights warmed, both gently. Anything
+     *  stronger and the ink stops matching the theme's ink colour, which is
+     *  what `analyseEdges()` keys off. */
+    shadowTint: [0.95, 0.98, 1.08] as [number, number, number],
+    highlightTint: [1.05, 1.005, 0.95] as [number, number, number],
+
+    /** Contact shadow blob under each kart. Multiplied into the beauty buffer,
+     *  not drawn as a grey disc: a grey disc over a dark road reads as a stain
+     *  that is *lighter* than the surface it is supposed to be darkening. */
+    shadowDarkness: 0.46,
+    /** How far the blob is allowed to stretch along the sun's ground direction.
+     *  A low sun makes a long shadow; capped because a 6 m smear from a 15°
+     *  sun stops reading as belonging to the kart. */
+    shadowMaxStretch: 2.1,
+
+    /** Particle pool sizes are per *tier* (structure, resolved once at load —
+     *  ARCHITECTURE.md §8); these are the per-effect rates. */
+    particleGravity: -9.0,
+    /** Sparks per second per sliding rear wheel at drift tier 3. */
+    sparkRate: 90,
+    /** Dust puffs per second per wheel on a loose surface at full slip. */
+    dustRate: 34,
+    /** Boost flame puffs per second while a boost is running. */
+    boostRate: 70,
   },
 
   quality: {

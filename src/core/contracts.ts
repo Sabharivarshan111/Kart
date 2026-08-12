@@ -179,6 +179,20 @@ export interface TrackSpec {
   direction: 1;
 }
 
+/**
+ * A cup: four tracks raced in order, points carried between them. Content only
+ * — the scoring table lives in `core/config.ts` (`race.cupPoints`) and the
+ * standings live in `race/rules.ts`. This is the running order and nothing else.
+ */
+export interface CupSpec {
+  id: string;
+  name: string;
+  /** One line of UI copy. Shown under the cup name on the select screen. */
+  blurb: string;
+  /** Track ids, in racing order. Resolved through `trackById`. */
+  trackIds: string[];
+}
+
 export interface DriverSpec {
   id: string;
   name: string;

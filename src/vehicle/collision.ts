@@ -36,6 +36,22 @@ import type { Kart } from './kart.ts';
 const K = CONFIG.kart;
 const SAMPLE = blankSample();
 
+/**
+ * How far past the barrier's inside face a kart can be and still count as
+ * touching it rather than as being outside the world.
+ *
+ * Measured against the two ways a kart can legitimately be found past the face
+ * at the top of a step: it arrived through it, worth at most one step of travel
+ * at the boosted ceiling (33 m/s ÷ 120 Hz = 0.28 m), or a rival's positional
+ * separation shoved it there, worth at most about a collision radius. The
+ * barrier's own thickness plus that radius covers both with margin.
+ *
+ * Raise it and a kart genuinely outside the world is teleported back onto the
+ * road instead of being recovered; lower it and a kart leaned on by a rival
+ * against the barrier is dropped out of bounds and respawned for it.
+ */
+const OUT_OF_BOUNDS = CONFIG.track.wallThickness + K.collision.radius;
+
 export interface WallHit {
   kart: Kart;
   /** Impact speed along the wall normal, m/s. Drives the FX and the audio. */
@@ -67,6 +83,20 @@ export function resolveWalls(kart: Kart, surface: TrackSurface): WallHit | null 
   const lateral = SAMPLE.lateral;
   if (Math.abs(lateral) <= limit) return null;
 
+  const penetration = Math.abs(lateral) - limit;
+  // A kart is only *in contact with* the barrier while it is inside the
+  // barrier's own thickness. Anything deeper is on the far side of the wall —
+  // out of bounds — and out of bounds belongs to the recovery system, not to
+  // collision.
+  //
+  // BUG (fixed): this test did not exist, so the half-plane clamp treated the
+  // whole world beyond the wall as barrier material and pushed anything out
+  // there back to the inside face. SYMPTOM: a kart 30 m off the centreline was
+  // teleported 22 m sideways onto the verge in a single step, which both reads
+  // as the track grabbing you and reset `offTrackTimer` every step — so the
+  // 1.6 s grace period could never elapse and recovery never fired at all.
+  if (penetration > OUT_OF_BOUNDS) return null;
+
   const side = Math.sign(lateral);
   // Wall normal points back toward the centre of the track.
   const nx = -station.rx * side;
@@ -75,7 +105,6 @@ export function resolveWalls(kart: Kart, surface: TrackSurface): WallHit | null 
   // Push out to the limit plus a small separation. Without the separation the
   // kart rests exactly on the boundary and re-collides every single step, which
   // is one of the two things that makes a wall sticky.
-  const penetration = Math.abs(lateral) - limit;
   const push = penetration + K.collision.separation;
   kart.x += nx * push;
   kart.z += nz * push;
