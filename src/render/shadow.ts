@@ -81,6 +81,11 @@ export function makeShadowMaterial(theme: Theme): THREE.ShaderMaterial {
     // there, which is the one thing a shadow must be guaranteed to be.
     blending: THREE.MultiplyBlending,
     transparent: true,
+    // Three warns on every boot without this — MultiplyBlending expects the
+    // source colour to already carry its alpha. The shader below writes
+    // `mix(vec3(1.0), shade, coverage)`, which is exactly that: full white
+    // (a no-op multiply) where the shadow does not reach.
+    premultipliedAlpha: true,
     depthWrite: false,
     side: THREE.DoubleSide,
     uniforms: {

@@ -45,12 +45,24 @@ const PARTICLE_VERTEX = /* glsl */ `
 
   void main() {
     vColour = aColour;
-    vAlpha = aAlpha;
     vCorner = position.xy;
     vec4 viewPos = viewMatrix * vec4(aCentre, 1.0);
     // Billboard: the offset is applied in view space, so the quad is always
     // parallel to the near plane whatever the camera is doing.
     viewPos.xy += position.xy * aSize;
+
+    // Near fade.
+    //
+    // Symptom this fixes: a landing burst emitted under the kart put
+    // half-metre puffs a metre from the chase camera, and they covered a
+    // quarter of the screen with grey discs — the road, the kerbs and the
+    // horizon all vanished behind them. Any billboard system will do this
+    // eventually, so the fade is on the pool rather than on the emitter.
+    // Gone by 1.2 m, full strength by 3.5 m: the chase camera sits 6 m back,
+    // so nothing the player is meant to see is ever touched by this.
+    float depth = -viewPos.z;
+    vAlpha = aAlpha * smoothstep(1.2, 3.5, depth);
+
     gl_Position = projectionMatrix * viewPos;
   }
 `;

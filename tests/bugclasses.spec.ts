@@ -9,7 +9,11 @@ import { boot, overlaps, setControls, simulate, stats, teleport } from './helper
  * asserts against a measurement, never against a screenshot.
  */
 
-const LAP_COPPER = 791;
+// Lap length of the default track (Kayal Causeway), as measured by the geometry
+// validator. Kept as one constant because every placement below is a fraction
+// of it — when this drifts out of date the tests quietly start measuring a
+// different part of the circuit than they were written for.
+const LAP_COPPER = 780;
 
 test.describe('bug classes', () => {
   // -------------------------------------------------------------------------
@@ -44,28 +48,51 @@ test.describe('bug classes', () => {
   });
 
   // -------------------------------------------------------------------------
-  test('2 — sticky walls: a shallow graze keeps most of the speed', async ({ page }) => {
+  test('2 — sticky walls: leaning harder on the barrier does not slow the kart more', async ({
+    page,
+  }) => {
     await boot(page, { karts: 1 });
     await page.evaluate(() => window.sparkdrift!.setPhase('racing'));
 
-    // Placed near the barrier on a straight, running almost parallel to it and
-    // steering gently into it — the classic graze.
-    await teleport(page, 0, 0.30 * LAP_COPPER, 6.4, 22);
-    await setControls(page, 0, { throttle: 1, steer: 0.12 });
-    await simulate(page, 0.4);
-    const before = (await stats(page)).karts[0]!.speed;
-    await simulate(page, 1.2);
-    const after = (await stats(page)).karts[0]!;
+    // Reaching the barrier means crossing the verge, and on this track the
+    // verge is grass, which costs most of the speed all by itself. An absolute
+    // "keeps 70% of its speed" bar would therefore be measuring grass drag and
+    // calling it wall behaviour.
+    //
+    // What isolates the wall is the *gradient*: a sticky wall cancels the
+    // velocity component pushed into it, so the harder you steer into the
+    // barrier the more speed you lose, and at full lock you stop dead. A
+    // correct response reflects the tangential component instead, so leaning on
+    // it costs nothing extra — the kart just slides along.
+    const run = async (steer: number) => {
+      await teleport(page, 0, 0.30 * LAP_COPPER, 5.0, 22);
+      await setControls(page, 0, { throttle: 1, steer });
+      await simulate(page, 1.5);
+      return (await stats(page)).karts[0]!;
+    };
 
-    // The naive response — cancel the velocity into the wall — glues the kart
-    // to it and speed collapses toward zero. Anything above 70% means the
-    // tangential component survived.
+    const light = await run(0.16);
+    const hard = await run(0.6);
+
+    // Both runs must actually be against the barrier, or this proves nothing.
+    expect(light.distanceToEdge, 'the light run never left the road').toBeLessThan(0);
+    expect(hard.distanceToEdge, 'the hard run never left the road').toBeLessThan(0);
     expect(
-      after.speed / before,
-      `grazing the wall cost ${(100 - (after.speed / before) * 100).toFixed(0)}% of the speed`,
-    ).toBeGreaterThan(0.7);
-    // And it is still moving forward, not pinned.
-    expect(after.speed).toBeGreaterThan(8);
+      Math.abs(hard.lateral - light.lateral),
+      'the two runs ended at different lateral offsets, so they are not both on the wall',
+    ).toBeLessThan(0.2);
+
+    // The gradient assertion. Anything below 0.9 means pressing into the wall
+    // is being punished, which is the pinning behaviour this class is about.
+    const ratio = hard.speed / Math.max(0.001, light.speed);
+    expect(
+      ratio,
+      `leaning on the barrier cost ${((1 - ratio) * 100).toFixed(0)}% more speed than brushing it ` +
+        `(hard ${hard.speed.toFixed(1)} m/s vs light ${light.speed.toFixed(1)} m/s) — the wall is sticky`,
+    ).toBeGreaterThan(0.9);
+
+    // And it is still travelling, not pinned to the barrier.
+    expect(hard.speed, 'the kart is stuck on the wall').toBeGreaterThan(6);
     await setControls(page, 0, null);
   });
 

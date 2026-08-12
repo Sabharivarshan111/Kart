@@ -166,7 +166,13 @@ export const SALTPAN: Theme = defineTheme({
   road: 0x6a6f74,
   kerbA: 0xfaf9f4,
   kerbB: 0xd4573f,
-  grass: 0x8d9468,
+  // Not green. `grass` is the colour the terrain shell and the verge take, and
+  // on the Rann there is no vegetation for a hundred kilometres — the ground
+  // outside the road is salt crust. An olive here rendered the whole frame as
+  // an ordinary meadow circuit and threw away the one thing this track is for.
+  // Held a shade cooler and darker than `sand` so the verge still separates
+  // from the road shoulder rather than merging into one white field.
+  grass: 0xd9d7ca,
   sand: 0xeae7d8,
   boostStrip: 0x35c8e8,
   wall: 0xb9bfbb,

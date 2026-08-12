@@ -341,10 +341,17 @@ export class KartView {
 
     // --- landing debris -----------------------------------------------------
     // A burst rather than a rate: the moment of contact is the whole point.
-    if (this.wasAirborne && !k.airborne) {
+    // Only a landing worth seeing. Below a fifth of a second of airtime this
+    // fires on every kerb strip and on the teleport the harness uses to place a
+    // kart, which is where the perfectly circular puff in the early frames came
+    // from.
+    if (this.wasAirborne && !k.airborne && k.airtime > 0.2) {
       this.dustColourFor(k.sample.surface);
       for (let i = 0; i < 14; i++) {
-        const a = (i / 14) * Math.PI * 2;
+        const j0 = this.rand();
+        // Jittered off the exact spoke. Fourteen evenly spaced particles read
+        // as a drawn ring rather than as debris — the regularity is the tell.
+        const a = ((i + j0 * 0.9) / 14) * Math.PI * 2;
         const j1 = this.rand();
         p.emit(
           'dust',
