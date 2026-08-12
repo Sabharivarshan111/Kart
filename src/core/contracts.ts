@@ -196,6 +196,12 @@ export interface CupSpec {
 export interface DriverSpec {
   id: string;
   name: string;
+  /** One line of character for the select screen. Optional so nothing breaks
+   *  if a driver has none. */
+  blurb?: string;
+  /** What they are studying or rotating through. The medical-student angle is
+   *  playful and lives here and in `blurb` — never in anything clinical. */
+  rotation?: string;
   /** 0..1 stat weights. They trade off; the sum is deliberately not constant,
    *  because "balanced" is one of the choices. */
   topSpeed: number;
