@@ -4,20 +4,33 @@ Honest and current. Anything unverified says so.
 
 ## Broken, and the tests now say so
 
-- **The AI cannot complete a lap.** A single AI kart, alone on the track with
-  nothing to collide with, runs wide within three seconds, pins itself against
-  the barrier and grinds along it at 4 m/s against a 24.5 m/s top speed. In an
-  eight-kart race nobody finishes: across four races, zero karts crossed the
-  line inside 300 simulated seconds.
+- **The AI still cannot complete a lap, but it is no longer stuck.** Three real
+  defects were found and fixed; a fourth remains.
 
-  Instrumented: the AI holds `steer` saturated at −1.00 indefinitely while
-  `throttle` sits at 0.70, which is the off-road clamp. So it is at full lock
-  trying to get back, and not recovering. Physics is not the cause — driving
-  the same kart with fixed controls behaves correctly, and running wide with
-  zero steering on a curve is right. The fault is in `race/ai.ts`.
+  Fixed:
+  1. **The steering controller.** `angleError × 2.2` saturated at any error past
+     26°. From the grid, with a 6 m look-ahead and the kart two metres off the
+     line, the first frame already demanded full lock — it oscillated, ran wide,
+     and held `steer` at exactly −1.00 for the rest of the race. Replaced with
+     pure pursuit, which is self-limiting by construction.
+  2. **The off-road branch held 70% throttle and set brake to zero.** On grass,
+     at 58% of the road's grip, on the outside of a corner, that keeps the tyres
+     saturated longitudinally with nothing left in the grip circle to turn with.
+     It now scrubs to a recoverable speed and then powers back on.
+  3. **No reverse.** A kart wedged nose-first into a barrier cannot drive out
+     forwards at any throttle. It now detects being under walking pace for over
+     a second and backs off, steering away from the wall.
 
-  **This invalidates the item balance table**, which cannot be gathered until
-  AI races finish, and it invalidates any earlier claim that the AI worked.
+  Measured effect, solo AI over 90 s on Kayal Causeway: progress went from
+  ~810 m (i.e. barely off the grid) to ~1450 m, top speed seen rose from 4 m/s
+  to 15.9 m/s, and it does now get back onto the road unaided.
+
+  **Still wrong:** it oscillates in one narrow section near u≈670–740 and
+  crosses the line in neither case. Bug class 6 improved from "91% of the race
+  off the road" to **68%**, and is still failing. The bar is 25%.
+
+  **The item balance table cannot be gathered until this is finished**, and no
+  claim that the AI works should be made until it is.
 
 - **Bug class 6 was passing while this was true**, which is worse than the bug.
   It sampled `offTrackTimer`, which only counts time on **Void** — fully

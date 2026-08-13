@@ -170,6 +170,12 @@ export class AiDriver {
 
   /** Deliberate mistakes: real drivers do not drive the profile perfectly, and
    *  an AI that does is unbeatable and boring in the same breath. */
+  /** Seconds spent below walking pace. A kart wedged nose-first into a barrier
+   *  cannot drive out of it forwards at any throttle, and without this it sits
+   *  there for the rest of the race. */
+  private stuckTimer = 0;
+  private reverseTimer = 0;
+
   private mistakeTimer = 0;
   private mistakeSteer = 0;
   private nextMistakeCheck = 0;
@@ -213,8 +219,36 @@ export class AiDriver {
     // --- look-ahead --------------------------------------------------------
     // Speed-scaled: at 20 m/s the AI aims about 24 m ahead. Too short and it
     // saws at the wheel; too long and it cuts the corner it is aiming past.
-    const lookAhead = A.lookAheadBase + speed * A.lookAheadPerSpeed;
+    // Off the road the aim point comes in close. A target 25 m down the racing
+    // line, seen from the outside barrier, is a heading error the steering
+    // saturates against and never resolves; a near one is reachable.
+    const lookAhead =
+      (A.lookAheadBase + speed * A.lookAheadPerSpeed) * (kart.sample.onRoad ? 1 : 0.45);
     const targetU = wrapLength(u + lookAhead, this.line.length);
+
+    // ---- wedged? ----------------------------------------------------------
+    // Measured: a recovery that only ever drives forwards leaves the kart at
+    // 0.0 m/s against the barrier indefinitely, because the wall cancels the
+    // component into it and forward throttle has nowhere to go. Backing off and
+    // re-approaching is the only thing that clears it.
+    if (speed < 1.2) this.stuckTimer += dt;
+    else this.stuckTimer = 0;
+    if (this.stuckTimer > 1.2) {
+      this.reverseTimer = 1.1;
+      this.stuckTimer = 0;
+    }
+    if (this.reverseTimer > 0) {
+      this.reverseTimer -= dt;
+      out.throttle = 0;
+      out.brake = 1;
+      // Steer *away* from where the nose is pointing so reversing swings the
+      // kart back toward the road rather than straight back into the wall.
+      out.steer = kart.sample.lateral > 0 ? 1 : -1;
+      out.drift = false;
+      out.useItem = false;
+      out.lookBack = false;
+      return;
+    }
 
     this.updateMistakes(dt);
     this.updateAvoidance(dt, rivals);
@@ -232,13 +266,30 @@ export class AiDriver {
     // --- steering ----------------------------------------------------------
     const toX = p.x - kart.x;
     const toZ = p.z - kart.z;
+    // ---- pure pursuit ----------------------------------------------------
+    // The steering angle that puts the kart on a circular arc through the aim
+    // point: curvature = 2·sin(alpha) / L, steering angle = atan(curvature ·
+    // wheelbase). It is self-limiting — the demand falls as the target comes
+    // into line — which a proportional gain is not.
+    //
+    // Symptom this replaces: `angleError * 2.2` saturated at any error past 26°.
+    // From the grid, with a 6 m look-ahead and the kart two metres off the line,
+    // the very first frame already demanded full lock; the kart oscillated,
+    // ran wide, and spent the entire race pinned to the outside barrier with
+    // steer reading exactly -1.00. Not one AI race in four ever finished.
     const desiredHeading = Math.atan2(toX, toZ);
-    let steer = wrapAngle(desiredHeading - kart.heading);
-    // Convert an angle error into a steering demand. 2.2 rad⁻¹ measured against
-    // the kart's steering response: lower and it understeers into every apex,
-    // higher and it oscillates on the straights.
-    steer = clamp(steer * 2.2, -1, 1) + this.mistakeSteer;
-    out.steer = clamp(steer, -1, 1);
+    const alpha = wrapAngle(desiredHeading - kart.heading);
+    const aimDistance = Math.max(4, Math.hypot(toX, toZ));
+    const pathCurvature = (2 * Math.sin(alpha)) / aimDistance;
+    const wantAngle = Math.atan(pathCurvature * CONFIG.kart.wheelbase);
+
+    // Expressed as a fraction of the lock actually available at this speed, so
+    // the control struct means the same thing it does from a thumb.
+    const speedT = clamp01(speed / CONFIG.kart.steer.fullEffectSpeed);
+    const maxLock =
+      CONFIG.kart.steer.maxAngleLow +
+      (CONFIG.kart.steer.maxAngleHigh - CONFIG.kart.steer.maxAngleLow) * speedT;
+    out.steer = clamp(wantAngle / Math.max(0.05, maxLock) + this.mistakeSteer, -1, 1);
 
     // --- speed profile -----------------------------------------------------
     // The profile is followed at a fraction set by skill. This is the only
@@ -262,10 +313,40 @@ export class AiDriver {
       out.brake = 0;
     }
 
-    // Off the road, get back on it before worrying about pace.
-    if (!kart.sample.onRoad && kart.sample.distanceToEdge < -1.5) {
-      out.throttle = Math.min(out.throttle, 0.7);
-      out.brake = 0;
+    // ================= OFF THE ROAD =================
+    // Grip, not pace. Grass gives 58% of the road's lateral grip and sand 44%,
+    // so a speed that was correct on the racing line is far past what will turn
+    // out here — and the outside of a corner is exactly where a kart that ran
+    // wide ends up.
+    //
+    // Symptom this fixes: the previous version held 70% throttle and set brake
+    // to zero. Measured, a solo AI kart with nothing to collide with ran wide
+    // within three seconds, pinned itself against the barrier and ground along
+    // it at 4 m/s for the rest of the race, steer saturated at -1.00 the whole
+    // way. Not one AI race in four ever finished. Under full lock it could not
+    // even claw back a metre of lateral offset in six seconds, because the
+    // throttle was keeping the tyres saturated in the longitudinal direction
+    // and there was nothing left in the grip circle to turn with.
+    if (!kart.sample.onRoad) {
+      // 9 m/s: measured as the speed at which grass grip (0.58 of the road's)
+      // still generates enough lateral force to pull the kart back across the
+      // verge inside a couple of seconds. Above it, braking is the only thing
+      // worth doing; below it, braking is the wrong thing entirely — the first
+      // attempt at this fix braked proportionally to how far out the kart was,
+      // which stopped it dead on the grass at 0.2 m/s and left it there for the
+      // whole race.
+      const RECOVER_SPEED = 9;
+      if (speed > RECOVER_SPEED) {
+        out.throttle = 0;
+        out.brake = clamp01(0.2 + (speed - RECOVER_SPEED) / 6);
+      } else {
+        // Slow enough to steer now. Power back on, gently — full throttle here
+        // saturates the tyres longitudinally again and there is nothing left in
+        // the grip circle to turn with.
+        out.throttle = 0.55;
+        out.brake = 0;
+      }
+      out.drift = false;
     }
 
     // --- drift -------------------------------------------------------------
