@@ -2,6 +2,19 @@
 
 Honest and current. Anything unverified says so.
 
+## Written but not reachable
+
+- **The shell — `src/ui/shell.ts`, `settings.ts`, `licences.ts`.** About 1,900
+  lines covering title, mode select, cup select, character select, results,
+  pause, options and the licences text. It typechecks and it is committed, but
+  **nothing imports it**: `src/main.ts` still boots straight into a race from
+  URL parameters. Until it is wired, it is dead code and none of it has been
+  seen on screen or captured in a frame. Do not count it as done.
+
+  In particular the **open-source licences screen is still not reachable from
+  inside the game**, which is the binding MIT obligation. Writing the text was
+  the easy half; the obligation is only met when a player can get to it.
+
 ## Not built yet
 
 - **Online multiplayer.** Not started and not planned for this build. It needs
