@@ -298,9 +298,14 @@ export class TouchControls {
 .sd-touch[data-hand="left"] .sd-btn-item  { left: calc(env(safe-area-inset-left, 0px) + 112px); bottom: calc(env(safe-area-inset-bottom, 0px) + 76px); }
 .sd-touch[data-hand="left"] .sd-btn-brake { left: calc(env(safe-area-inset-left, 0px) + 16px); bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); }
 .sd-touch[data-hand="left"] .sd-btn-throttle { left: calc(env(safe-area-inset-left, 0px) + 112px); bottom: calc(env(safe-area-inset-bottom, 0px) + 172px); }
+/* Top centre, not the top-right corner. On a phone in landscape the corner is
+   already the lap clock stacked on the minimap — measured at 844x390 the button
+   sat on top of both — and the centre is the one band of the top edge nothing
+   else claims. It is also the hardest place to hit by accident, which is what
+   you want from the button that stops the race. */
 .sd-pause {
   position: absolute; top: calc(env(safe-area-inset-top, 0px) + 8px);
-  right: calc(env(safe-area-inset-right, 0px) + 8px);
+  left: 50%; transform: translateX(-50%);
   width: 48px; height: 48px; border-radius: 12px;
   border: 2px solid ${UI.panelEdge}; background: ${UI.shadow}; color: ${UI.ink};
   font-size: 14px; touch-action: none;

@@ -199,6 +199,22 @@ zero, which is silently no lines at all.
   reporting DPR 2.6 renders a fifth of the panel's linear resolution and looks
   terrible while doing exactly what it was told.
 - Viewport comes from `visualViewport`, never `innerHeight`.
+- **The game is landscape-only, and that is a contract, not a preference.**
+  Portrait — and any landscape viewport under 320 px tall — shows the rotate
+  gate and **pauses the simulation**, so a race never runs unwatched behind an
+  interstitial. Nothing in the game may lay itself out a second time for
+  portrait: a supported layout is one that is verified, and portrait is not.
+- **The gate decides on viewport shape, never on `screen.orientation`.** The
+  reported orientation and the shape of the space actually available disagree
+  on a phone with the keyboard open, on a half-open foldable, and in a desktop
+  window dragged flat. `orientation.lock('landscape')` may be *attempted*; it is
+  refused on iOS entirely and outside fullscreen everywhere, so it may never be
+  the only mechanism.
+- **Every screen must be verified at 844×390 and 740×340**, which is what a
+  handset held sideways is. Vertical space is what runs out first, so short
+  viewports get a `max-height` layout: tighter padding, stacked button columns
+  become rows, prose clamps to one line, and the body scrolls as a floor under
+  all of it. **The 48 px touch-target minimum is not part of that trade.**
 
 ---
 

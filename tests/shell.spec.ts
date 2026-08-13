@@ -129,22 +129,68 @@ test.describe('shell', () => {
     await assertNothingOverflows(page);
   });
 
-  test('the shell fits a phone viewport', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await bootShell(page);
-    await snap(page, 'shell-phone', 'the title screen at 390x844 with nothing off-screen');
-    await assertNothingOverflows(page);
-
-    // Touch targets must clear 48 px, or they are not touch targets.
-    const small = await page.evaluate(() => {
-      const bad: string[] = [];
-      for (const el of Array.from(document.querySelectorAll('.sd-shell button'))) {
-        const r = el.getBoundingClientRect();
-        if (r.width === 0 || r.height === 0) continue;
-        if (r.height < 44) bad.push(`${el.textContent?.trim()}: ${r.height.toFixed(0)}px tall`);
+  // The phone case is **landscape**, because portrait is gated (see
+  // src/ui/orientation.ts) and a screen the player is never shown is not worth
+  // asserting on. This test existed at 390x844 and passed, which is exactly why
+  // the title screen's START button being 18 px below the fold at 844x390 went
+  // unnoticed: the suite was measuring the one shape the game refuses to run in.
+  for (const size of [
+    { name: 'phone-landscape', width: 844, height: 390 },
+    { name: 'phone-landscape-small', width: 740, height: 340 },
+  ]) {
+    test(`every menu fits ${size.width}x${size.height}`, async ({ page }) => {
+      await page.setViewportSize({ width: size.width, height: size.height });
+      await bootShell(page);
+      await assertNothingOverflows(page);
+      if (size.name === 'phone-landscape') {
+        await snap(page, 'shell-phone', `the title screen at ${size.width}x${size.height}`);
       }
-      return bad;
+
+      // Touch targets must clear 48 px, or they are not touch targets. This is
+      // the one thing the short-viewport layout may not trade away.
+      const tooSmall = async () =>
+        page.evaluate(() => {
+          const bad: string[] = [];
+          for (const el of Array.from(document.querySelectorAll('.sd-shell button'))) {
+            const r = el.getBoundingClientRect();
+            if (r.width === 0 || r.height === 0) continue;
+            if (r.height < 44) bad.push(`${el.textContent?.trim()}: ${r.height.toFixed(0)}px tall`);
+          }
+          return bad;
+        });
+      expect(await tooSmall()).toEqual([]);
+
+      // Walk the whole shell, not just the first screen: every one of these was
+      // laid out as a tall column and every one of them has to survive being
+      // 390 px high.
+      const steps = [
+        { label: 'mode select', needle: 'start' },
+        { label: 'cup select', needle: 'grand prix' },
+        { label: 'track or driver select', needle: 'cup' },
+      ];
+      for (const step of steps) {
+        const clicked = await page.evaluate((needle) => {
+          const buttons = Array.from(document.querySelectorAll('.sd-shell button')) as HTMLElement[];
+          const hit = buttons.find((b) => (b.textContent ?? '').toLowerCase().includes(needle));
+          if (!hit) return false;
+          hit.click();
+          return true;
+        }, step.needle);
+        if (!clicked) break;
+        await page.waitForTimeout(150);
+        await assertNothingOverflows(page);
+        expect(await tooSmall(), `small targets on ${step.label}`).toEqual([]);
+      }
+
+      // Options and licences, which are the longest reading screens in the app.
+      await page.evaluate(() => {
+        const back = Array.from(document.querySelectorAll('.sd-shell button')).find((b) =>
+          /back|esc/i.test(b.textContent ?? ''),
+        ) as HTMLElement | undefined;
+        back?.click();
+      });
+      await page.waitForTimeout(150);
+      await assertNothingOverflows(page);
     });
-    expect(small, `touch targets under 44px: ${small.join(', ')}`).toEqual([]);
-  });
+  }
 });

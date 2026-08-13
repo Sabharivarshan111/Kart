@@ -1,26 +1,27 @@
 {
   "title": "Sparkdrift India",
   "subtitle": "A cel-shaded kart racer across India, built in the browser",
-  "wave": 1,
-  "waveLabel": "Wave 1 landed \u2014 worldbuilding, render depth, audio, defects",
+  "wave": 2,
+  "waveLabel": "Wave 2 in flight — the game is landscape-only, and the menus fit a phone held sideways",
   "build": {
     "typecheck": "clean",
-    "singleFileBytes": 710378,
+    "singleFileBytes": 756929,
     "tracksValidated": 8,
-    "bugClassPassing": 12,
+    "bugClassPassing": 11,
     "bugClassTotal": 12
   },
   "caveats": [
-    "No side-by-side against Mario Kart 8 Deluxe is possible \u2014 the game is not available in this environment. The critic works from a written first-party rubric applied to our own captured frames.",
+    "No side-by-side against Mario Kart 8 Deluxe is possible — the game is not available in this environment. The critic works from a written first-party rubric applied to our own captured frames.",
     "Multiplayer is local split-screen. Online play needs an authoritative server, prediction and hosting, none of which exist here.",
-    "Frame timings come from a headless software rasteriser with no GPU. They bound the CPU cost only and say nothing about real device frame rate."
+    "Frame timings come from a headless software rasteriser with no GPU. They bound the CPU cost only and say nothing about real device frame rate.",
+    "Portrait is not supported and is not going to be. The game shows a rotate prompt and pauses. Every mobile measurement here is from an emulated viewport; nothing has been run on a physical handset."
   ],
   "pieces": [
     {
       "id": "P1",
       "name": "India worldbuilding",
       "status": "done",
-      "note": "Eight tracks \u2014 Kayal Causeway, Jharokha Bazaar, Sundown Sands, Seawall Squall, Stonestep Ghats, Saltpan Mirage, Nightshift Circuit, Snowline Pass. Two cups. All eight pass the geometry validator."
+      "note": "Eight tracks — Kayal Causeway, Jharokha Bazaar, Sundown Sands, Seawall Squall, Stonestep Ghats, Saltpan Mirage, Nightshift Circuit, Snowline Pass. Two cups. All eight pass the geometry validator."
     },
     {
       "id": "P2",
@@ -55,8 +56,8 @@
     {
       "id": "P7",
       "name": "Menus and shell",
-      "status": "queued",
-      "note": "Title, cup select, character select, results, options, licences."
+      "status": "done",
+      "note": "Title, cup select, character select, results, options, licences — and all of them measured at 844x390 and 740x340, which is what a phone held sideways actually is."
     },
     {
       "id": "P8",
@@ -85,16 +86,19 @@
   ],
   "critic": {
     "round": 0,
-    "verdict": "Not yet run. Wave 1 has only just landed and the frames it produced have been reviewed by the orchestrator, not by an independent critic. Round 1 goes in next.",
-    "biggestGap": "Karts read as dark blobs against bright ground on Saltpan Mirage and Kayal Causeway \u2014 value separation between the hero object and the road is the most visible shortfall in the current frames."
+    "verdict": "Still not run independently. This wave was driven by measured rectangles and captured frames rather than by a critic, and the biggest gap below is unchanged.",
+    "biggestGap": "Karts read as dark blobs against bright ground on Saltpan Mirage and Kayal Causeway — value separation between the hero object and the road is the most visible shortfall in the current frames."
   },
   "fixed": [
+    "The title screen at 844x390 put START, OPTIONS and LICENCES below the fold: the game was literally unstartable on a phone held in landscape, and the suite missed it because its only phone test was portrait — the one shape the game now refuses to run in.",
+    "The leaderboard sat on screen for the whole race, and in the touch layout its box landed on the countdown numeral.",
+    "The pause button overlapped both the lap clock and the minimap at 844x390. Measured, not eyeballed.",
     "The projected shadow used MultiplyBlending without premultiplied alpha, so Three warned on every boot and the boot guard failed the whole shot suite.",
     "Landing debris emitted a perfect ring of fourteen grey discs a metre from the camera, covering a quarter of the screen. Fixed with a near fade on the pool, angular jitter, and a minimum airtime.",
     "The Rann of Kutch salt flat rendered as a green meadow, because the terrain shell takes the theme grass colour and that slot held an olive.",
-    "The bug-class suite still used the deleted track\u2019s 791 m lap, so every placement landed somewhere other than intended.",
-    "The cel shader multiplied by the light colour as well as the band level, darkening everything by the ambient\u2019s own luminance.",
-    "Nothing converted linear to sRGB on output \u2014 the whole game rendered about five stops too dark.",
-    "The mesh builder\u2019s winding was inverted, so every generated box was inside-out and back-face culled. Karts rendered as solid black shells."
+    "The bug-class suite still used the deleted track’s 791 m lap, so every placement landed somewhere other than intended.",
+    "The cel shader multiplied by the light colour as well as the band level, darkening everything by the ambient’s own luminance.",
+    "Nothing converted linear to sRGB on output — the whole game rendered about five stops too dark.",
+    "The mesh builder’s winding was inverted, so every generated box was inside-out and back-face culled. Karts rendered as solid black shells."
   ]
 }

@@ -12,6 +12,7 @@ import { resolveTier } from './render/renderer.ts';
 import { Hud } from './ui/hud.ts';
 import { TouchControls } from './ui/touch.ts';
 import { Shell } from './ui/shell.ts';
+import { createOrientationGate, orientationCss } from './ui/orientation.ts';
 
 /**
  * Boot.
@@ -67,6 +68,7 @@ style.textContent = `
   ${Hud.css()}
   ${TouchControls.css()}
   ${Shell.css()}
+  ${orientationCss()}
 `;
 document.head.appendChild(style);
 
@@ -165,6 +167,26 @@ const shell = new Shell({ game, overlay, params });
 shell.start();
 
 // ---------------------------------------------------------------------------
+// Landscape gate
+// ---------------------------------------------------------------------------
+// Portrait is not a supported layout: the steering zone has nowhere to go that
+// is not under the kart, and the chase camera loses the horizontal room it
+// needs to show the corner ahead. The game pauses behind the gate rather than
+// running unwatched — a race that carries on while the player is rotating the
+// phone is a race they have already lost.
+//
+// `?nogate=1` disables it, for the verification harness: the desktop suite runs
+// at 1280x720 and is never gated, but the mobile profiles are 390 wide and
+// would be.
+const gate = createOrientationGate(overlay, (blocking) => {
+  game.setPaused(blocking);
+});
+if (params.get('nogate') === '1') {
+  gate.root.style.display = 'none';
+  game.setPaused(false);
+}
+
+// ---------------------------------------------------------------------------
 // Harness
 // ---------------------------------------------------------------------------
 let readyResolve: () => void = () => {};
@@ -220,6 +242,7 @@ function stats(): HarnessStats {
   const g = game.renderer.gbuffer.size;
   return {
     phase: game.race.phase,
+    paused: game.isPaused,
     cameraRoll: game.camera.currentRoll,
     cameraFov: game.camera.fieldOfView,
     time: game.race.time,

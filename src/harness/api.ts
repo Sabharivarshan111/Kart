@@ -56,6 +56,11 @@ export interface KartStats {
 
 export interface HarnessStats {
   phase: Phase;
+  /** True while the simulation is frozen — the pause menu, or the landscape
+   *  gate. `phase` does not say this on its own: the gate deliberately leaves
+   *  the race in `racing` so rotating the phone resumes exactly where it
+   *  stopped rather than re-entering through the pause menu. */
+  paused: boolean;
   cameraRoll: number;
   cameraFov: number;
   time: number;

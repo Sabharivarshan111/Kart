@@ -299,20 +299,36 @@ test.describe('bug classes', () => {
   test('9 — leaderboard text is clipped to its row, badge or no badge', async ({ page }) => {
     await boot(page, { karts: 8 });
     await page.evaluate(() => window.sparkdrift!.setPhase('racing'));
-    // Give the leader a boost so their row carries a badge and therefore has
-    // less room for the name than every other row.
+    // Earn a real drift boost, so the leader's row carries a badge and has
+    // genuinely less room for the name than every other row. Held throttle
+    // alone no longer does it — nothing about going fast puts a badge on a row.
+    // Measured: two seconds of throttle to get up to speed, then 1.6 s of
+    // three-fifths lock on the drift button reaches tier 1 and releases into a
+    // 0.35 s boost. Full lock does **not** — it scrubs the kart down to 2 m/s
+    // and the drift drops out below the slip gate.
     await setControls(page, 0, { throttle: 1 });
-    await simulate(page, 4);
+    await simulate(page, 2);
+    await setControls(page, 0, { throttle: 1, steer: 0.6, drift: true });
+    await simulate(page, 1.6);
+    await setControls(page, 0, { throttle: 1, steer: 0, drift: false });
+    await simulate(page, 0.1);
+
+    // The board is hidden mid-race by design (see Hud.update), so the
+    // measurement is taken at the flag, which is when it is on screen. The
+    // boost is still running, so the badge is still 'BST'.
+    await page.evaluate(() => window.sparkdrift!.setPhase('finished'));
     await page.evaluate(
       () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))),
     );
 
     const s = await stats(page);
+    expect(s.karts[0]!.boostTime, 'no drift boost was earned, so no badge').toBeGreaterThan(0);
     const row = s.uiRects['hud.board.row0'];
     const name = s.uiRects['hud.board.row0.name'];
     const badge = s.uiRects['hud.board.row0.badge'];
     expect(row).toBeTruthy();
     expect(name).toBeTruthy();
+    expect(badge, 'the boosting kart has no badge, so this proves nothing').toBeTruthy();
 
     // The name box must sit inside its row, with a pixel of tolerance for
     // sub-pixel layout rounding.

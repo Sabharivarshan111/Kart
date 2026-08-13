@@ -174,6 +174,22 @@ export class Hud {
 
     this.warningEl.style.opacity = warning ? '1' : '0';
 
+    // The full running order is for the moments when the player can read it:
+    // the grid, and the flag. **During the race it goes away.** Eight rows of
+    // names in the corner of a phone held in landscape is a third of the useful
+    // screen spent on information the big position number top-left already
+    // gives, and it sat there for the whole race.
+    //
+    // On the grid it is worth the space on a desktop window. On a phone held in
+    // landscape it is **not**: at 390 CSS px of height the board's own box lands
+    // squarely on the countdown numeral, and hiding "3 — 2 — 1 — GO" behind a
+    // list of names the player has not raced yet is the wrong trade. There, the
+    // board waits for the flag.
+    const atFlag = race.phase === 'finished';
+    const onGrid = race.phase === 'countdown' || (race.phase === 'racing' && race.time < 1.5);
+    const showBoard = atFlag || (onGrid && !this.touchLayout);
+    this.root.dataset.board = showBoard ? 'full' : 'hidden';
+
     this.updateBoard(race, karts);
     this.drawMinimap(race, karts, player);
   }
@@ -271,12 +287,18 @@ export class Hud {
     add('hud.speed', this.speedEl);
     add('hud.item', this.itemEl);
     add('hud.minimap', this.minimap);
-    add('hud.board', this.boardEl);
-    const first = this.boardRows[0];
-    if (first && first.row.style.display !== 'none') {
-      add('hud.board.row0', first.row);
-      add('hud.board.row0.name', first.name);
-      add('hud.board.row0.badge', first.badge);
+    // Only when it is actually on screen; see the board visibility note above.
+    // `visibility: hidden` still reports a box, so the rows have to be gated on
+    // the same flag or a hidden board would keep failing the overlap test for
+    // space it is not using.
+    if (this.root.dataset.board !== 'hidden') {
+      add('hud.board', this.boardEl);
+      const first = this.boardRows[0];
+      if (first && first.row.style.display !== 'none') {
+        add('hud.board.row0', first.row);
+        add('hud.board.row0.name', first.name);
+        add('hud.board.row0.badge', first.badge);
+      }
     }
     return out;
   }
@@ -356,6 +378,17 @@ export class Hud {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
   width: 210px; display: flex; flex-direction: column; gap: 2px;
   font-size: 12px;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+/* Hidden while racing. visibility as well as opacity, so it stops taking
+   pointer events, stops being announced to a screen reader, and reports no
+   rectangle — a test asserting that no control overlaps an instrument must not
+   trip over an instrument that is not on screen. */
+.sd-hud[data-board="hidden"] .sd-board {
+  opacity: 0; visibility: hidden; transform: translateY(6px);
+}
+.sd-hud[data-layout="touch"][data-board="hidden"] .sd-board {
+  transform: translateX(-50%) translateY(6px);
 }
 .sd-board-row {
   display: flex; align-items: center; gap: 6px;

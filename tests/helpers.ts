@@ -19,6 +19,9 @@ export interface BootOptions {
   difficulty?: number;
   touch?: boolean;
   mode?: 'grand-prix' | 'time-trial' | 'arena';
+  /** Leave the landscape gate active. Off by default so the suite is not
+   *  fighting it on every mobile profile. */
+  gate?: boolean;
 }
 
 export async function boot(page: Page, opts: BootOptions = {}): Promise<void> {
@@ -27,6 +30,10 @@ export async function boot(page: Page, opts: BootOptions = {}): Promise<void> {
   // Straight into a race, past the title screen. The shell is exercised by its
   // own shots rather than by every test in the suite having to navigate it.
   params.set('race', '1');
+  // The landscape gate would otherwise cover a 390-wide mobile profile and
+  // pause the game under it. Tests that want to see the gate ask for it
+  // explicitly (tests/orientation.spec.ts).
+  if (!opts.gate) params.set('nogate', '1');
   if (opts.track) params.set('track', opts.track);
   if (opts.karts !== undefined) params.set('karts', String(opts.karts));
   if (opts.difficulty !== undefined) params.set('difficulty', String(opts.difficulty));

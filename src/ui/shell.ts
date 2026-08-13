@@ -269,8 +269,13 @@ abstract class Screen {
  * of the game — medical students who have blocked out a weekend — in one line,
  * and it is drawn from arithmetic, not from an image.
  */
-function drawWordmark(canvas: HTMLCanvasElement, cssWidth: number): void {
-  const w = Math.max(260, Math.min(cssWidth, 760));
+function drawWordmark(canvas: HTMLCanvasElement, cssWidth: number, cssMaxHeight: number): void {
+  // Width alone is the wrong constraint. A phone in landscape is 844x390: the
+  // full-width mark would be 760x228, which is 58% of the height, and the three
+  // buttons under it fall off the bottom of the screen — measured, before this
+  // second clamp existed. Height gets a vote.
+  const byWidth = Math.max(260, Math.min(cssWidth, 760));
+  const w = Math.max(260, Math.min(byWidth, Math.round(cssMaxHeight / 0.3)));
   const h = Math.round(w * 0.30);
   const dpr = Math.min(typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, 2);
   canvas.width = Math.round(w * dpr);
@@ -424,7 +429,9 @@ class TitleScreen extends Screen {
   }
 
   private redraw(): void {
-    drawWordmark(this.canvas, this.root.clientWidth - 40);
+    // A third of the screen for the mark, at most. The rest belongs to the
+    // buttons, which are the point of the screen.
+    drawWordmark(this.canvas, this.root.clientWidth - 40, this.root.clientHeight * 0.34);
   }
 }
 
@@ -1583,9 +1590,55 @@ div.sd-track-btn { padding: 8px 10px; border-radius: 10px; border: 1px solid ${U
 .sd-td.is-points { color: ${UI.accent}; flex-basis: 56px; }
 .sd-champion { margin: 0; font-size: 14px; color: ${UI.accent}; letter-spacing: 0.06em; flex-basis: 100%; }
 
+/* --- short viewports ------------------------------------------------------
+   A phone in landscape is the shape this game is played in, and it is short:
+   844x390 for a mid-size handset, less once the browser chrome is counted.
+   Every screen here was laid out as a tall column, which at 390 px of height
+   put the START button 18 px below the fold — measured, on the title screen,
+   with the game therefore unstartable.
+
+   The rules below are about height, not width, because that is what actually
+   runs out: type comes down, vertical padding comes in, the stacked button
+   columns become rows, and — as a floor under all of it — the body scrolls, so
+   that nothing can ever be unreachable even on a shape not anticipated here.
+   Touch targets keep their 48 px minimum. That floor does not move. */
+@media (max-height: 520px) {
+  .sd-screen {
+    gap: 8px;
+    padding:
+      calc(env(safe-area-inset-top, 0px) + 12px)
+      calc(env(safe-area-inset-right, 0px) + 18px)
+      calc(env(safe-area-inset-bottom, 0px) + 10px)
+      calc(env(safe-area-inset-left, 0px) + 18px);
+  }
+  .sd-body { overflow-y: auto; }
+  .sd-h1 { font-size: 19px; }
+  .sd-sub { font-size: 12px; margin-top: 4px; }
+  .sd-fine { font-size: 10px; line-height: 1.45; }
+  .sd-tagline { font-size: 11px; }
+  .sd-title-actions {
+    flex-direction: row; flex-wrap: wrap; align-items: center; padding-top: 6px;
+  }
+  .sd-title-actions button { min-width: 0; flex: 1 1 200px; text-align: center; }
+  .sd-card { margin-bottom: 8px; }
+  .sd-cups { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+  .sd-opt { padding: 8px 0; }
+  /* The prose is clamped, not deleted. A track's one-line idea is the reason
+     to pick it; on a short screen it gets one line instead of two. */
+  .sd-card-note, .sd-cup-blurb, .sd-track-idea, .sd-opt-note {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1;
+    line-clamp: 1; overflow: hidden;
+  }
+  .sd-weight-note { margin-top: 8px; }
+  .sd-pause-panel { gap: 8px; }
+}
+
 /* --- fps ----------------------------------------------------------------- */
 .sd-fps {
-  position: absolute; top: calc(env(safe-area-inset-top, 0px) + 8px); left: 50%;
+  /* Below the pause button, which owns the top-centre band on the touch
+     layout. Two overlaid readouts in the same 48 px is how you get a frame
+     counter nobody can read and a pause button nobody can press. */
+  position: absolute; top: calc(env(safe-area-inset-top, 0px) + 64px); left: 50%;
   transform: translateX(-50%);
   padding: 4px 10px; border-radius: 8px;
   background: ${UI.shadow}; color: ${UI.ink};

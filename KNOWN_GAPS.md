@@ -27,7 +27,8 @@ Honest and current. Anything unverified says so.
 
   **Still wrong:** it oscillates in one narrow section near u≈670–740 and
   crosses the line in neither case. Bug class 6 improved from "91% of the race
-  off the road" to **68%**, and is still failing. The bar is 25%.
+  off the road" to **57%** on the latest run, and is still failing. The bar is
+  25%.
 
   **The item balance table cannot be gathered until this is finished**, and no
   claim that the AI works should be made until it is.
@@ -99,11 +100,33 @@ Honest and current. Anything unverified says so.
 
 ## Currently failing
 
-- **Bug class 5 (respawn).** Recovery does not trigger when the kart is placed
-  30 m off the centreline. Under investigation — the likely cause is the wall
-  resolver clamping the kart back inside the corridor before the off-track timer
-  can accumulate, which would mean the timer never sees a Void surface.
-- **Bug class 6 (AI off-road).** One AI kart stayed off the corridor for 1.43 s
-  in an AI-only race, against a 1.0 s bar. Under investigation.
+- **Bug class 6 (AI off-road).** The one remaining failure, described in full at
+  the top of this file. The assertion has not been relaxed.
+- **The item balance table** (`tests/balance.spec.ts`) fails for the same
+  reason: it needs a hundred races the AI cannot finish.
 
-Both are real defects. Neither assertion has been relaxed.
+Bug class 5 (respawn) was listed here and now passes; the entry was stale.
+
+## Orientation, and what it costs
+
+- **Portrait is not a supported layout.** The game shows a rotate prompt and
+  pauses behind it. This is a deliberate choice, not a missing feature: at
+  390 px of width there is nowhere to put the steering zone that is not either
+  under the kart or off the bottom of the screen, and the chase camera loses the
+  horizontal room it needs to show the corner ahead. Laying the whole HUD out a
+  second time to ship a version nobody should play is worse than saying no.
+- **The gate is on viewport shape, not `screen.orientation`.** A phone with the
+  keyboard open, a half-open foldable and a desktop window dragged flat all
+  disagree with the reported orientation, and the shape is what actually
+  matters. A landscape window under 320 px tall is gated for the same reason.
+- **`screen.orientation.lock('landscape')` is attempted and mostly refused** —
+  iOS does not implement it at all, and no browser honours it outside
+  fullscreen. It can never be the only answer, so the gate is the real one.
+- **Short viewports clamp prose to one line.** Below 520 px of height the mode
+  descriptions, cup blurbs, track ideas and option notes are clamped with an
+  ellipsis. The writing still ships and the screens still scroll; it is not all
+  on screen at once. Touch targets keep their 48 px floor — that does not move.
+- **Every mobile measurement in this repo is from an emulated viewport.**
+  Nothing has run on a physical handset, so nothing here is evidence about how
+  the gate behaves against real browser chrome, a real notch, or a real rotation
+  animation.
