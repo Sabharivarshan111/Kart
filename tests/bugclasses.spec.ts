@@ -211,12 +211,22 @@ test.describe('bug classes', () => {
     // kart that is off-road *transiently* — a check only at the end would miss
     // every excursion that recovered.
     const worstOffTrack = new Array(8).fill(0);
+    // `offTrackTimer` only counts time on **Void** — fully outside the corridor.
+    // A kart pinned against the barrier on the verge is on-road=false the whole
+    // time and never accumulates a single tick of it. That is exactly how this
+    // test passed for a whole session while the AI could not complete a lap, so
+    // the sample now records what fraction of the race each kart spent with
+    // wheels off the *road*, which is the thing the class is actually about.
+    const offRoadSamples = new Array(8).fill(0);
+    let samples = 0;
     let maxRespawns = 0;
     for (let i = 0; i < 360; i++) {
       await simulate(page, 0.25);
       const s = await stats(page);
+      samples++;
       for (const k of s.karts) {
         worstOffTrack[k.index] = Math.max(worstOffTrack[k.index], k.offTrackTimer);
+        if (!k.onRoad) offRoadSamples[k.index]++;
         maxRespawns = Math.max(maxRespawns, k.respawns);
       }
     }
@@ -228,10 +238,25 @@ test.describe('bug classes', () => {
       ).toBeLessThan(1.0);
     }
 
-    // And they actually raced rather than sitting still.
+    // Off the road for most of the race is the failure this class exists to
+    // catch, and a corridor-only timer cannot see it.
+    for (let i = 0; i < offRoadSamples.length; i++) {
+      const fraction = offRoadSamples[i] / Math.max(1, samples);
+      expect(
+        fraction,
+        `AI kart ${i} spent ${(fraction * 100).toFixed(0)}% of the race off the road`,
+      ).toBeLessThan(0.25);
+    }
+
+    // And they actually raced. 200 m over 90 s is 2.2 m/s against a 24.5 m/s
+    // top speed — a bar that low passes for a kart grinding along a barrier,
+    // which is what it was doing. A competent lap is well over 1200 m.
     const s = await stats(page);
     for (const k of s.karts) {
-      expect(k.progress, `AI kart ${k.index} made no progress`).toBeGreaterThan(200);
+      expect(
+        k.progress,
+        `AI kart ${k.index} covered only ${k.progress.toFixed(0)} m in 90 s`,
+      ).toBeGreaterThan(1000);
     }
     // eslint-disable-next-line no-console
     console.log(

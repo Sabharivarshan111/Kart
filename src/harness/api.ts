@@ -48,6 +48,10 @@ export interface KartStats {
   offTrackTimer: number;
   item: string | null;
   wheelsOnGround: number;
+  /** The control struct this kart was last driven with, whoever produced it.
+   *  Exposed because "the AI is slow" and "the AI is steering into a wall" look
+   *  identical from the outside, and only this tells them apart. */
+  controls: { throttle: number; brake: number; steer: number; drift: boolean };
 }
 
 export interface HarnessStats {

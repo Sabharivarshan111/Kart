@@ -210,6 +210,7 @@ function kartStats(index: number): KartStats {
     offTrackTimer: k.offTrackTimer,
     item: game.items.held[index] ?? null,
     wheelsOnGround: k.wheelsOnGround,
+    controls: game.lastControls(index),
   };
 }
 

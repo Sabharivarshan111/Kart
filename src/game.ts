@@ -424,6 +424,14 @@ export class Game {
     this.ai[0] = driver;
   }
 
+  /** The controls a kart was last stepped with. Read-only snapshot for the
+   *  harness; the buffer itself is reused every step. */
+  lastControls(index: number): { throttle: number; brake: number; steer: number; drift: boolean } {
+    const c = this.controlBuffers[index];
+    if (!c) return { throttle: 0, brake: 0, steer: 0, drift: false };
+    return { throttle: c.throttle, brake: c.brake, steer: c.steer, drift: c.drift };
+  }
+
   setControlOverride(index: number, controls: Partial<Controls> | null): void {
     if (index < 0 || index >= this.harnessOverrides.length) return;
     this.harnessOverrides[index] = controls;

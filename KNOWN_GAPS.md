@@ -2,6 +2,33 @@
 
 Honest and current. Anything unverified says so.
 
+## Broken, and the tests now say so
+
+- **The AI cannot complete a lap.** A single AI kart, alone on the track with
+  nothing to collide with, runs wide within three seconds, pins itself against
+  the barrier and grinds along it at 4 m/s against a 24.5 m/s top speed. In an
+  eight-kart race nobody finishes: across four races, zero karts crossed the
+  line inside 300 simulated seconds.
+
+  Instrumented: the AI holds `steer` saturated at −1.00 indefinitely while
+  `throttle` sits at 0.70, which is the off-road clamp. So it is at full lock
+  trying to get back, and not recovering. Physics is not the cause — driving
+  the same kart with fixed controls behaves correctly, and running wide with
+  zero steering on a curve is right. The fault is in `race/ai.ts`.
+
+  **This invalidates the item balance table**, which cannot be gathered until
+  AI races finish, and it invalidates any earlier claim that the AI worked.
+
+- **Bug class 6 was passing while this was true**, which is worse than the bug.
+  It sampled `offTrackTimer`, which only counts time on **Void** — fully
+  outside the corridor. A kart pinned to the barrier on the verge is
+  `onRoad === false` continuously and never accrues a single tick. Its other
+  assertion, "progress > 200 m in 90 s", is 2.2 m/s and passes comfortably for
+  a kart grinding along a wall.
+
+  The test now samples `onRoad` directly and requires 1000 m of progress. It
+  **fails**, correctly, and is left failing rather than relaxed.
+
 ## Not built yet
 
 - **Online multiplayer.** Not started and not planned for this build. It needs
