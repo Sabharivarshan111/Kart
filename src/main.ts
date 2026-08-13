@@ -11,6 +11,7 @@ import type { HarnessStats, KartStats, SparkdriftHarness } from './harness/api.t
 import { resolveTier } from './render/renderer.ts';
 import { Hud } from './ui/hud.ts';
 import { TouchControls } from './ui/touch.ts';
+import { Shell } from './ui/shell.ts';
 
 /**
  * Boot.
@@ -65,6 +66,7 @@ style.textContent = `
   #sd-canvas { display: block; width: 100%; height: 100dvh; }
   ${Hud.css()}
   ${TouchControls.css()}
+  ${Shell.css()}
 `;
 document.head.appendChild(style);
 
@@ -147,6 +149,20 @@ window.addEventListener('pointerdown', () => void firstGesture(), { passive: tru
 window.addEventListener('keydown', () => void firstGesture(), { passive: true });
 
 game.start();
+
+// ---------------------------------------------------------------------------
+// Shell
+// ---------------------------------------------------------------------------
+// Without `race=1` the shell takes over on load and shows the title screen over
+// an AI race running as the backdrop. With it, the game is already racing and
+// the shell is only the pause menu and the results screen.
+//
+// The verification harness always passes `race=1` (see tests/helpers.ts): a
+// suite that had to click through four menus to reach a corner would be testing
+// the menus, and every frame it captured would be one navigation change away
+// from breaking.
+const shell = new Shell({ game, overlay, params });
+shell.start();
 
 // ---------------------------------------------------------------------------
 // Harness

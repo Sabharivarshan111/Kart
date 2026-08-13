@@ -2,30 +2,18 @@
 
 Honest and current. Anything unverified says so.
 
-## Written but not reachable
-
-- **The shell — `src/ui/shell.ts`, `settings.ts`, `licences.ts`.** About 1,900
-  lines covering title, mode select, cup select, character select, results,
-  pause, options and the licences text. It typechecks and it is committed, but
-  **nothing imports it**: `src/main.ts` still boots straight into a race from
-  URL parameters. Until it is wired, it is dead code and none of it has been
-  seen on screen or captured in a frame. Do not count it as done.
-
-  In particular the **open-source licences screen is still not reachable from
-  inside the game**, which is the binding MIT obligation. Writing the text was
-  the easy half; the obligation is only met when a player can get to it.
-
 ## Not built yet
 
 - **Online multiplayer.** Not started and not planned for this build. It needs
   an authoritative server, client prediction, lag compensation, matchmaking and
   a hosting bill that scales with players; none of that exists here. Local
   split-screen is the multiplayer that ships.
-- **Menus and shell.** The game boots straight into a race from URL parameters.
-  There is no title screen, cup select, character select, results screen,
-  options panel or licences screen yet. The licences screen is a **binding
-  obligation** — Three.js is MIT and its notice must ship reachable from inside
-  the game — and it is currently missing.
+- **Records and ghosts** — see below. The shell itself is now wired and
+  reachable: title, mode select, cup select, character select, results, pause,
+  options and the licences screen, with a live AI race as the title backdrop.
+  The licences obligation is met — a test navigates to the screen from the
+  title and asserts the MIT permission notice and warranty disclaimer are
+  present as full text rather than a link.
 - **Records and ghosts.** No `localStorage` persistence, no time-trial ghost.
 - **Customization.** Drivers have stats and colours; there is no picker, no
   paint, no wheels, no racing number.

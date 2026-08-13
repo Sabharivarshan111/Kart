@@ -24,6 +24,9 @@ export interface BootOptions {
 export async function boot(page: Page, opts: BootOptions = {}): Promise<void> {
   const params = new URLSearchParams();
   params.set('seed', String(opts.seed ?? 1));
+  // Straight into a race, past the title screen. The shell is exercised by its
+  // own shots rather than by every test in the suite having to navigate it.
+  params.set('race', '1');
   if (opts.track) params.set('track', opts.track);
   if (opts.karts !== undefined) params.set('karts', String(opts.karts));
   if (opts.difficulty !== undefined) params.set('difficulty', String(opts.difficulty));
