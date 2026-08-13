@@ -8,12 +8,6 @@ Honest and current. Anything unverified says so.
   an authoritative server, client prediction, lag compensation, matchmaking and
   a hosting bill that scales with players; none of that exists here. Local
   split-screen is the multiplayer that ships.
-- **Records and ghosts** — see below. The shell itself is now wired and
-  reachable: title, mode select, cup select, character select, results, pause,
-  options and the licences screen, with a live AI race as the title backdrop.
-  The licences obligation is met — a test navigates to the screen from the
-  title and asserts the MIT permission notice and warranty disclaimer are
-  present as full text rather than a link.
 - **Records and ghosts.** No `localStorage` persistence, no time-trial ghost.
 - **Customization.** Drivers have stats and colours; there is no picker, no
   paint, no wheels, no racing number.

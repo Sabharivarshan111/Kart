@@ -287,7 +287,16 @@ export class Hud {
   position: fixed; inset: 0; pointer-events: none; z-index: 30;
   color: ${UI.ink};
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  text-shadow: 0 2px 6px ${UI.shadow};
+  /* A hard ink contour, not a soft drop shadow.
+     Symptom this fixes: over the salt flat's near-white sky and ground, "LAP
+     1/3" in the dim ink colour with a soft shadow behind it was effectively
+     invisible — the HUD has to be legible over the brightest AND the darkest
+     part of every track, and a blur only helps against one of them. Four
+     offsets plus a blur gives a contour that survives both. */
+  text-shadow:
+    -1px 0 0 ${UI.contour}, 1px 0 0 ${UI.contour},
+    0 -1px 0 ${UI.contour}, 0 1px 0 ${UI.contour},
+    0 2px 7px ${UI.shadow};
 }
 .sd-hud-topleft {
   position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px);
@@ -300,7 +309,9 @@ export class Hud {
 }
 .sd-position { font-size: 56px; font-weight: 700; line-height: 1; }
 .sd-position-ordinal { font-size: 20px; margin-left: 2px; }
-.sd-lap { font-size: 16px; letter-spacing: 0.1em; color: ${UI.inkDim}; margin-top: 4px; }
+/* Full ink, not the dim tone: this is the one instrument the player checks
+   without taking their eyes off the corner. */
+.sd-lap { font-size: 16px; letter-spacing: 0.1em; color: ${UI.ink}; margin-top: 4px; }
 .sd-time { font-size: 22px; font-variant-numeric: tabular-nums; }
 .sd-minimap { width: 132px; height: 132px; opacity: 0.92; }
 .sd-hud-bottomright {

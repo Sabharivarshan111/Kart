@@ -91,21 +91,24 @@ export class KartView {
     const bodyMat = world.celMaterial({
       vertexColours: true,
       gloss: 0.18,
-      rim: 0.30,
+      // Raised from 0.30: on the salt flat and the causeway the rim was the
+      // only thing holding the kart off the road and it was losing.
+      rim: 0.42,
       ramp: 'crisp',
+      minAmbient: 0.72,
     });
     const body = new THREE.Mesh(tagGeometry(geo.body, OBJECT_IDS.kart), bodyMat);
     this.bodyGroup.add(body);
     world.outlines.attach(body);
 
     if (showDriver) {
-      const driverMat = world.celMaterial({ vertexColours: true, rim: 0.22, ramp: 'crisp' });
+      const driverMat = world.celMaterial({ vertexColours: true, rim: 0.30, ramp: 'crisp', minAmbient: 0.72 });
       const driver = new THREE.Mesh(tagGeometry(geo.driver, OBJECT_IDS.driver), driverMat);
       this.bodyGroup.add(driver);
       world.outlines.attach(driver);
     }
 
-    const wheelMat = world.celMaterial({ vertexColours: true, gloss: 0.1, ramp: 'crisp' });
+    const wheelMat = world.celMaterial({ vertexColours: true, gloss: 0.1, ramp: 'crisp', minAmbient: 0.62 });
     const wheelGeo = tagGeometry(geo.wheel, OBJECT_IDS.wheel);
     for (let i = 0; i < 4; i++) {
       const w = new THREE.Mesh(wheelGeo, wheelMat);

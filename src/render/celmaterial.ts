@@ -127,6 +127,18 @@ export interface CelOptions {
   gloss?: number;
   /** Rim light strength. Cheap separation from the background on dark themes. */
   rim?: number;
+  /**
+   * Floor under the theme's own ambient level, for hero objects.
+   *
+   * Symptom this fixes: on the bright themes — the salt flat especially — a
+   * kart's saturated mid-tone body sat at about a seventh of the ground's
+   * value. That is physically right and it reads as a black blob: all the
+   * internal banding crushes together and the kart stops being a shape. Hero
+   * objects get a higher floor than the world they sit on so their own bands
+   * stay separated, which is what keeps them readable as karts rather than as
+   * silhouettes.
+   */
+  minAmbient?: number;
   /** Which band count this surface is lit with. Defaults to `standard`. */
   ramp?: RampKind;
   transparent?: boolean;
@@ -298,7 +310,7 @@ export function makeCelMaterial(theme: Theme, opts: CelOptions = {}): THREE.Shad
       // every theme is required to define, so no theme needs a new field.
       uSkyColour: { value: new THREE.Color().setHex(theme.skyTop, THREE.SRGBColorSpace) },
       uBounceColour: { value: new THREE.Color().setHex(theme.sand, THREE.SRGBColorSpace) },
-      uAmbientLevel: { value: theme.ambientLevel },
+      uAmbientLevel: { value: Math.max(theme.ambientLevel, opts.minAmbient ?? 0) },
       uRampV: { value: rampV(opts.ramp ?? 'standard') },
       uRamp: { value: celRamp() },
       uFogColour: { value: new THREE.Color().setHex(theme.fog, THREE.SRGBColorSpace) },

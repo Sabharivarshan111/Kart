@@ -106,6 +106,9 @@ export const UI = {
   danger: '#ff5b5b',
   good: '#86e04a',
   shadow: 'rgba(4, 7, 14, 0.55)',
+  /** Near-opaque ink for text contours. Sits under every HUD glyph so the
+   *  readout survives a white salt flat and a night circuit alike. */
+  contour: 'rgba(6, 9, 16, 0.92)',
   backdrop: '#0b0f1a',
 } as const;
 
